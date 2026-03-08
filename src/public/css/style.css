@@ -1,0 +1,8 @@
+:root { --bg: #ffffff; --text: #1a1a1a; --accent: #007bff; }
+@media (prefers-color-scheme: dark) { :root { --bg: #121212; --text: #e0e0e0; --accent: #375a7f; } }
+body { font-family: sans-serif; background: var(--bg); color: var(--text); display: flex; justify-content: center; padding: 2rem; }
+.container { max-width: 600px; width: 100%; border: 1px solid #444; padding: 20px; border-radius: 8px; }
+textarea, input, select { width: 100%; margin-bottom: 1rem; background: #222; color: #fff; border: 1px solid #444; padding: 10px; }
+button { width: 100%; padding: 10px; background: var(--accent); color: white; border: none; cursor: pointer; }
+.hidden { display: none; }
+#toast { position: fixed; bottom: 20px; right: 20px; padding: 10px 20px; border-radius: 4px; color: #fff; }
