@@ -43,16 +43,7 @@
 
     <script src="js/crypto.js"></script>
     <script>
-        const app = {
-    toast(msg, err = false) {
-        const t = document.getElementById('toast');
-        if(!t) return; // Fail-safe
-        t.innerText = msg;
-        t.className = err ? 'error' : 'success';
-        setTimeout(() => t.className = 'hidden', 3000);
-    },
-
-    async shred() {
+        async shred() {
         const textBtn = document.querySelector('button');
         const textInput = document.getElementById('text');
         
@@ -65,13 +56,15 @@
             textBtn.disabled = true;
             textBtn.innerText = "Processing...";
 
+            // 1. Key erstellen
             const key = await Crypto.createKey();
             const exportedKey = await crypto.subtle.exportKey("raw", key);
             const rawKey = btoa(String.fromCharCode(...new Uint8Array(exportedKey)));
             
-            // Text verschlüsseln
+            // 2. Verschlüsseln
             const cipher = await Crypto.encrypt(textInput.value || "No text message", key);
             
+            // 3. Daten vorbereiten
             let fd = new FormData();
             fd.append('content', cipher);
             fd.append('expires', document.getElementById('expires').value);
@@ -81,31 +74,36 @@
                 fd.append('file', fileInput.files[0]);
             }
 
-            const res = await fetch('/api/upload.php', { method: 'POST', body: fd });
-            if(!res.ok) throw new Error("Upload failed");
+            // --- PFAD CHECK ---
+            // Wir versuchen es ohne den führenden / oder relativ zum aktuellen Verzeichnis
+            const res = await fetch('../api/upload.php', { method: 'POST', body: fd });
+            
+            if(!res.ok) {
+                const errorDetails = await res.text();
+                throw new Error("Server antwortet mit " + res.status + ": " + errorDetails);
+            }
             
             const data = await res.json();
             
-            // UI Switch
+            // UI Umschalten
             document.getElementById('view-create').classList.add('hidden');
             document.getElementById('view-result').classList.remove('hidden');
             document.getElementById('link-display').classList.remove('hidden');
             
-            const full = window.location.origin + "/#id=" + data.id + "&key=" + rawKey;
+            const full = window.location.origin + window.location.pathname + "#id=" + data.id + "&key=" + rawKey;
             document.getElementById('res-full').value = full;
             document.getElementById('res-id').value = data.id;
             document.getElementById('res-key').value = rawKey;
             
             this.toast("Shredded!");
         } catch(e) { 
-            console.error(e);
-            this.toast("Error: " + e.message, true); 
+            console.error("DEBUG:", e);
+            this.toast("Fehler: " + e.message, true); 
         } finally {
             textBtn.disabled = false;
             textBtn.innerText = "Shredden";
         }
     }
-};
     </script>
 </body>
 </html>
