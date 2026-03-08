@@ -1,0 +1,11 @@
+{
+  "title": "Ciphershred",
+  "subtitle": "Sicheres Teilen. Einmal lesen. Vernichten.",
+  "placeholder": "Geheime Nachricht hier...",
+  "encrypt_btn": "Verschlüsseln & Hochladen",
+  "expiry_1h": "1 Stunde",
+  "expiry_1d": "1 Tag",
+  "expiry_1w": "1 Woche",
+  "toast_success": "Erfolgreich verschlüsselt!",
+  "toast_error": "Fehler beim Upload."
+}
