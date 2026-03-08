@@ -1,5 +1,6 @@
 #!/bin/sh
 while true; do
-  php /var/www/html/api/cron-shredder.php
+  # Der Pfad zur API-Datei hat sich geändert
+  php /var/www/html/public/api/cron-shredder.php
   sleep 900
 done
