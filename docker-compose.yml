@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  ciphershred:
+    container_name: ciphershred
+    volumes:
+      - ./src/storage:/var/www/html/storage
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    restart: unless-stopped
