@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../core/Database.php';
+require_once __DIR__ . '/../../core/Database.php';
 header('Content-Type: application/json');
 
 $id = bin2hex(random_bytes(16));
@@ -12,7 +12,7 @@ try {
     if ($isFile) {
         if ($_FILES['file']['size'] > 50 * 1024 * 1024) throw new Exception("50MB Limit");
         $ext = strtolower(pathinfo($_FILES['file']['name'], PATHINFO_EXTENSION));
-        if (!in_array($ext, ['txt','key','pub','json','yaml','conf','pdf','zip','md'])) throw new Exception("Type forbidden");
+        if (!in_array($ext, ['txt','key','pub','json','yaml','conf','pdf','zip','md'])) throw new Exception("Typ nicht erlaubt");
         move_uploaded_file($_FILES['file']['tmp_name'], $storagePath);
         $name = $_FILES['file']['name'];
     } else {
