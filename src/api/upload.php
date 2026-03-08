@@ -10,19 +10,17 @@ $storagePath = "/var/www/html/storage/" . $id;
 try {
     $db = Database::getConnection();
     if ($isFile) {
-        $file = $_FILES['file'];
-        if ($file['size'] > 50 * 1024 * 1024) throw new Exception("Limit 50MB exceeded");
-        $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
-        if (!in_array(strtolower($ext), ['txt','key','pub','json','yaml','conf','pdf','zip','md'])) throw new Exception("Invalid Ext");
-        move_uploaded_file($file['tmp_name'], $storagePath);
-        $filename = $file['name'];
+        if ($_FILES['file']['size'] > 50 * 1024 * 1024) throw new Exception("50MB Limit");
+        $ext = strtolower(pathinfo($_FILES['file']['name'], PATHINFO_EXTENSION));
+        if (!in_array($ext, ['txt','key','pub','json','yaml','conf','pdf','zip','md'])) throw new Exception("Type forbidden");
+        move_uploaded_file($_FILES['file']['tmp_name'], $storagePath);
+        $name = $_FILES['file']['name'];
     } else {
         file_put_contents($storagePath, $_POST['content']);
-        $filename = "note.enc";
+        $name = "note.enc";
     }
-
     $stmt = $db->prepare("INSERT INTO secrets VALUES (?, ?, ?, ?)");
-    $stmt->execute([$id, $filename, time() + $expires, $isFile]);
+    $stmt->execute([$id, $name, time() + $expires, $isFile]);
     echo json_encode(['id' => $id]);
 } catch (Exception $e) {
     http_response_code(400);
