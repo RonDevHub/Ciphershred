@@ -1,0 +1,11 @@
+{
+  "title": "Ciphershred",
+  "subtitle": "Share securely. Read once. Shred.",
+  "placeholder": "Secret message here...",
+  "encrypt_btn": "Encrypt & Upload",
+  "expiry_1h": "1 Hour",
+  "expiry_1d": "1 Day",
+  "expiry_1w": "1 Week",
+  "toast_success": "Successfully encrypted!",
+  "toast_error": "Upload failed."
+}
