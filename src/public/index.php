@@ -50,7 +50,7 @@
                     <p>Anhang gefunden:</p>
                     <a id="download-link" class="btn-download">Datei herunterladen</a>
                 </div>
-                <p style="color:#ff4757; font-size:0.8em; margin-top:20px;">ℹ️ Diese Nachricht wurde soeben vom Server gelöscht.</p>
+                <p style="color:#ff4757; font-size:0.8em; margin-top:20px;">Diese Nachricht wurde soeben vom Server gelöscht.</p>
             </div>
         </div>
     </div>
@@ -150,7 +150,7 @@
                             document.getElementById('decrypted-text').innerText = new TextDecoder().decode(dec);
                         }
                     } catch(e) {
-                        document.getElementById('decrypted-text').innerText = "❌ Nachricht abgelaufen oder bereits vernichtet.";
+                        document.getElementById('decrypted-text').innerText = "Nachricht abgelaufen oder bereits vernichtet.";
                     }
                 }
             }
