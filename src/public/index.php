@@ -9,10 +9,7 @@
 <body>
     <div id="toast" class="hidden"></div>
     <div class="container">
-        <h1 id="ui-title">Ciphershred</h1>
-        <p id="ui-subtitle">Sicheres Teilen.</p>
-
-        <!-- Create Secret -->
+        <h1>Ciphershred</h1>
         <div id="view-create">
             <textarea id="text" placeholder="Nachricht..."></textarea>
             <input type="file" id="file">
@@ -21,89 +18,72 @@
                 <option value="86400">1 Tag</option>
                 <option value="604800">1 Woche</option>
             </select>
-            <button onclick="app.shred()">Shredden</button>
+            <button id="shred-btn" onclick="app.shred()">Shredden</button>
         </div>
-
-        <!-- Result / Read View -->
         <div id="view-result" class="hidden">
-            <div id="read-content" class="hidden">
-                <h3>Deine Nachricht:</h3>
-                <div id="decrypted-text" style="background:#222; padding:15px; white-space:pre-wrap;"></div>
-                <div id="file-download-area" class="hidden">
-                    <button id="download-btn">Datei herunterladen</button>
-                </div>
+            <div id="link-display">
+                <p>Full Link:</p><input id="res-full" readonly>
+                <p>Safe Link:</p><input id="res-id" readonly>
+                <p>Key:</p><input id="res-key" readonly>
+                <button onclick="location.reload()" style="margin-top:10px; background:#444;">Neu</button>
             </div>
-            <div id="link-display" class="hidden">
-                <p>Full Link (inkl. Key):</p><input id="res-full" readonly onclick="this.select()">
-                <p>Safe Link (ohne Key):</p><input id="res-id" readonly onclick="this.select()">
-                <p>Key:</p><input id="res-key" readonly onclick="this.select()">
+            <div id="read-display" class="hidden">
+                <h3>Nachricht:</h3>
+                <div id="decrypted-text" style="background:#111; padding:15px; border-radius:5px; margin-bottom:10px;"></div>
+                <p style="color:red; font-size:0.8em;">Diese Nachricht wurde vom Server gelöscht.</p>
             </div>
         </div>
     </div>
-
     <script src="js/crypto.js"></script>
     <script>
-        async shred() {
-        const textBtn = document.querySelector('button');
-        const textInput = document.getElementById('text');
-        
-        if(!textInput.value && !document.getElementById('file').files[0]) {
-            this.toast("Bitte Text oder Datei eingeben", true);
-            return;
-        }
+        const app = {
+            toast(msg, err = false) {
+                const t = document.getElementById('toast');
+                t.innerText = msg; t.className = err ? 'error' : 'success';
+                setTimeout(() => t.className = 'hidden', 3000);
+            },
+            async shred() {
+                const btn = document.getElementById('shred-btn');
+                try {
+                    btn.disabled = true; btn.innerText = "Processing...";
+                    const key = await Crypto.createKey();
+                    const rawKey = btoa(String.fromCharCode(...new Uint8Array(await crypto.subtle.exportKey("raw", key))));
+                    const cipher = await Crypto.encrypt(document.getElementById('text').value || "Kein Text", key);
+                    
+                    let fd = new FormData();
+                    fd.append('content', cipher);
+                    fd.append('expires', document.getElementById('expires').value);
+                    if(document.getElementById('file').files[0]) fd.append('file', document.getElementById('file').files[0]);
 
-        try {
-            textBtn.disabled = true;
-            textBtn.innerText = "Processing...";
-
-            // 1. Key erstellen
-            const key = await Crypto.createKey();
-            const exportedKey = await crypto.subtle.exportKey("raw", key);
-            const rawKey = btoa(String.fromCharCode(...new Uint8Array(exportedKey)));
-            
-            // 2. Verschlüsseln
-            const cipher = await Crypto.encrypt(textInput.value || "No text message", key);
-            
-            // 3. Daten vorbereiten
-            let fd = new FormData();
-            fd.append('content', cipher);
-            fd.append('expires', document.getElementById('expires').value);
-            
-            const fileInput = document.getElementById('file');
-            if(fileInput.files[0]) {
-                fd.append('file', fileInput.files[0]);
+                    const res = await fetch('api/upload.php', {method: 'POST', body: fd});
+                    const data = await res.json();
+                    
+                    document.getElementById('view-create').classList.add('hidden');
+                    document.getElementById('view-result').classList.remove('hidden');
+                    document.getElementById('res-full').value = window.location.origin + window.location.pathname + "#id=" + data.id + "&key=" + rawKey;
+                    document.getElementById('res-id').value = data.id;
+                    document.getElementById('res-key').value = rawKey;
+                } catch(e) { this.toast("Fehler!", true); }
+                finally { btn.disabled = false; btn.innerText = "Shredden"; }
+            },
+            async load() {
+                const p = new URLSearchParams(window.location.hash.substring(1));
+                if(p.has('id') && p.has('key')) {
+                    document.getElementById('view-create').classList.add('hidden');
+                    document.getElementById('view-result').classList.remove('hidden');
+                    document.getElementById('link-display').classList.add('hidden');
+                    document.getElementById('read-display').classList.remove('hidden');
+                    try {
+                        const res = await fetch('api/download.php?id=' + p.get('id'));
+                        const cipher = await res.text();
+                        const key = await Crypto.importKey(p.get('key'));
+                        const dec = await Crypto.decrypt(cipher, key);
+                        document.getElementById('decrypted-text').innerText = new TextDecoder().decode(dec);
+                    } catch(e) { document.getElementById('decrypted-text').innerText = "Fehler oder bereits gelöscht."; }
+                }
             }
-
-            // --- PFAD CHECK ---
-            // Wir versuchen es ohne den führenden / oder relativ zum aktuellen Verzeichnis
-            const res = await fetch('../api/upload.php', { method: 'POST', body: fd });
-            
-            if(!res.ok) {
-                const errorDetails = await res.text();
-                throw new Error("Server antwortet mit " + res.status + ": " + errorDetails);
-            }
-            
-            const data = await res.json();
-            
-            // UI Umschalten
-            document.getElementById('view-create').classList.add('hidden');
-            document.getElementById('view-result').classList.remove('hidden');
-            document.getElementById('link-display').classList.remove('hidden');
-            
-            const full = window.location.origin + window.location.pathname + "#id=" + data.id + "&key=" + rawKey;
-            document.getElementById('res-full').value = full;
-            document.getElementById('res-id').value = data.id;
-            document.getElementById('res-key').value = rawKey;
-            
-            this.toast("Shredded!");
-        } catch(e) { 
-            console.error("DEBUG:", e);
-            this.toast("Fehler: " + e.message, true); 
-        } finally {
-            textBtn.disabled = false;
-            textBtn.innerText = "Shredden";
-        }
-    }
+        };
+        window.onload = app.load;
     </script>
 </body>
 </html>
